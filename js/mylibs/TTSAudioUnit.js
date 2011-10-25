@@ -1,9 +1,17 @@
-TTSSEQUENCER.AudioUnit = function (text){
+TTSSEQUENCER.AudioUnit = function (){
 	this.id = null;
-	this.text = text || "Audio Unit";
+	this.text = "Audio Unit";
+	this.loaded = false;
+	this.sound = null;
 }
 TTSSEQUENCER.AudioUnit.prototype = {
 	constructor: TTSSEQUENCER.AudioUnit,
+	/////////////////////////////////////////////
+	// setText ----------------------------------
+	/////////////////////////////////////////////
+	setText: function(text){
+		this.text = text
+	}
 	/////////////////////////////////////////////
 	// play -------------------------------------
 	/////////////////////////////////////////////
