@@ -13,6 +13,7 @@
 	<meta name="viewport" content="width=device-width,initial-scale=1">
 
 	<link rel="stylesheet" href="css/style.css">
+	<link rel="stylesheet" href="css/ttssequencer.css">
 	
 	<script src="js/libs/modernizr-2.0.6.min.js"></script>
 </head>
@@ -21,9 +22,13 @@
 	<header> 
 
 	</header>
-	<div role="main">
-
+	<div id="ttss">
+	
 	</div>
+	<nav>
+		<a id="playbtn" href="#">play</a>
+		<a id="pausebtn" href="#">pause</a>
+	</nav>
 	<footer>
 
 	</footer>
@@ -31,15 +36,16 @@
 	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
 	<script>window.jQuery || document.write('<script src="js/libs/jquery-1.6.4.min.js"><\/script>')</script>
 
+	<script src="js/libs/signals.min.js"></script>
+	<script src="js/libs/soundmanager2-nodebug-jsmin.js"></script>
 
 	<!-- scripts concatenated and minified via build script -->
-	<script defer src="js/plugins.js"></script>
-	<script defer src="js/script.js"></script>
-	<script src="js/libs/soundmanager2-nodebug-jsmin.js"></script>
 	<script src="js/mylibs/TTSSequencer.js"></script>
 	<script src="js/mylibs/TTSMain.js"></script>
 	<script src="js/mylibs/TTSBeat.js"></script>
 	<script src="js/mylibs/TTSAudioUnit.js"></script>
+	<script src="js/plugins.js"></script>
+	<script src="js/script.js"></script>
 	<!-- end scripts -->
 
 	<script>

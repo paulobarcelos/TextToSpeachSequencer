@@ -1,24 +1,27 @@
-TTSSEQUENCER.Main = function (){
-	this.bpm = null;
-	this.beats = [];
-	this.beatSize = 0;
+TTSSEQUENCER.Main = function (size, bpm, domID, width, height){
+	var div = domID || 'ttss';
+	this.domElement = $('#'+div);
+	this.domElement.attr("class","ttss");
+	this.domElement.append('<div class="beatsbg"></div>');
+	this.domElement.find('.beatsbg').append('<div class="position"></div>');
+	this.positionDomElement = this.domElement.find('.position');// cache for speed
+	this.domElement.append('<div class="beats"></div>');
+
+	this.setLoopSize(size || 60);
+	this.setBPM(bpm || 128);
+	
+	this.resize(width || 1000, height || 600);
+
 	this.progress = 0;
 	this.isPaused = true;
-	this.totalTime = 0;
 	this.currentTime = 0;
 	this.relativeTime = 0;
 	this.nextPlayableBeat = null;
-	this.intervalID = 0;	
+	this.wrapToNextPlayableBeat = false;
+	this.intervalID = 0;
 }
 TTSSEQUENCER.Main.prototype = {
 	constructor: TTSSEQUENCER.Main,
-	/////////////////////////////////////////////
-	// setup ------------------------------------
-	/////////////////////////////////////////////
-	setup: function(size, bpm){
-		this.setLoopSize(size);
-		this.setBPM(bpm);
-	},
 	/////////////////////////////////////////////
 	// setBPM -----------------------------------
 	/////////////////////////////////////////////
@@ -28,14 +31,30 @@ TTSSEQUENCER.Main.prototype = {
 		this.updateTimmings();
 	},
 	/////////////////////////////////////////////
+	// getBPM -----------------------------------
+	/////////////////////////////////////////////
+	getBPM: function(){
+		return this.bpm;
+	},
+	/////////////////////////////////////////////
 	// setLoopSize ------------------------------
 	/////////////////////////////////////////////
 	setLoopSize: function(size){
+		this.domElement.find(".beats").empty();
 		this.beats = [];
 		for(i = 0; i < size; i++){
 			this.beats[i] = new TTSSEQUENCER.Beat(i);
+			this.domElement.find(".beats").append(this.beats[i].domElement);
+			this.beats[i].domElement.width(100/size+"%");
+			this.beats[i].domElement.css('left', (i/size*100)+"%");
 		}
 		this.updateTimmings();
+	},
+	/////////////////////////////////////////////
+	// getLoopSize ------------------------------
+	/////////////////////////////////////////////
+	getLoopSize: function(){
+		return this.beats.length;
 	},
 	/////////////////////////////////////////////
 	// updateTimmings ---------------------------
@@ -43,14 +62,24 @@ TTSSEQUENCER.Main.prototype = {
 	updateTimmings: function(){
 		this.totalTime = this.beatSize * this.beats.length;
 		for(i = 0; i < this.beats.length; i++){
-			this.beats[i].timePosition = (i+1) * this.beatSize;
+			this.beats[i].updateTimmings(this.beatSize);
 		}
+	},
+	/////////////////////////////////////////////
+	// resize -----------------------------------
+	/////////////////////////////////////////////
+	resize: function(width, height){
+		this.width = width;
+		this.height = height;
+		this.totalTime = this.beatSize * this.beats.length;
+		this.domElement.width(width).height(height);
 	},
 	/////////////////////////////////////////////
 	// createAudioUnit --------------------------
 	/////////////////////////////////////////////
-	createAudioUnit: function(text, position){
-		var audioUnit = new TTSSEQUENCER.AudioUnit(text);
+	createAudioUnit: function(language, text, position){
+		var audioUnit = new TTSSEQUENCER.AudioUnit();
+		audioUnit.loadAudio(language, text);
 		this.addAudioUnit(audioUnit, position);
 	},
 	/////////////////////////////////////////////
@@ -58,8 +87,7 @@ TTSSEQUENCER.Main.prototype = {
 	/////////////////////////////////////////////
 	addAudioUnit: function(audioUnit, position){
 		if(this.beats.indexOf(position)){
-			audioUnit.id = (this.beats[position].audioUnits.push(audioUnit) - 1);
-			this.beats[position].isEmpty = false;
+			this.beats[position].addAudioUnit(audioUnit);
 		}
 	},
 	/////////////////////////////////////////////
@@ -67,13 +95,7 @@ TTSSEQUENCER.Main.prototype = {
 	/////////////////////////////////////////////
 	removeAudioUnit: function(audioUnit, position){
 		if(this.beats.indexOf(position)){
-			if(this.beats[position].audioUnits.indexOf(audioUnit.id)){
-				this.beats[position].audioUnits.splice(audioUnit.id,1);
-				if(this.beats[position].audioUnits.length == 0){
-					this.beats[position].isEmpty = true;
-					this.beats[position].isWaitingPlay = true;
-				}					
-			}
+			this.beats[position].removeAudioUnit(audioUnit.id);
 		}
 	},
 	/////////////////////////////////////////////
@@ -117,11 +139,20 @@ TTSSEQUENCER.Main.prototype = {
 	/////////////////////////////////////////////
 	defineNextPlayableBeat: function(){
 		for(i = 0; i < this.beats.length; i++){
-			if(this.beats[i].timePosition > this.relativeTime){
-				if(!this.beats[i].isEmpty){
+			if(this.beats[i].timePosition >= this.relativeTime){
+				if(this.beats[i].audioUnits.length){
 					this.nextPlayableBeat = this.beats[i];
-					this.nextPlayableBeat.isWaitingPlay = true;
-					break;
+					return;
+				}
+			} 
+		}
+		// if we got here, wrap around 
+		for(i = 0; i < this.beats.length; i++){
+			if(this.beats[i].timePosition >= 0){
+				if(this.beats[i].audioUnits.length){
+					this.nextPlayableBeat = this.beats[i];
+					this.wrapToNextPlayableBeat = true;
+					return;
 				}
 			} 
 		}
@@ -137,17 +168,23 @@ TTSSEQUENCER.Main.prototype = {
 				
 			this.currentTime = time;
 			this.progress = this.relativeTime / this.totalTime;
-				if(this.nextPlayableBeat.isWaitingPlay){
-					if(this.relativeTime > this.nextPlayableBeat.timePosition){
+
+			if(this.nextPlayableBeat){
+				if(!this.wrapToNextPlayableBeat){
+					if(this.relativeTime >= this.nextPlayableBeat.timePosition){
 						this.nextPlayableBeat.play();
 						this.defineNextPlayableBeat();
 					}
 				}
-
-			if(this.relativeTime >= this.totalTime){
-				this.relativeTime = this.totalTime - this.relativeTime;
-				this.defineNextPlayableBeat();
 			}
+						
+			if(this.relativeTime >= this.totalTime){
+				this.relativeTime = this.relativeTime - this.totalTime;
+				this.wrapToNextPlayableBeat = false;
+				//this.defineNextPlayableBeat();
+			}
+
+			this.positionDomElement.css('left', (this.progress*100)+'%');
 		}
 	}	
 }
