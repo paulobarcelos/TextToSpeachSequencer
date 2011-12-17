@@ -10,7 +10,7 @@ TTSSEQUENCER.Main = function (size, bpm, domID, width, height){
 	this.setLoopSize(size || 60);
 	this.setBPM(bpm || 128);
 	
-	this.resize(width || 1000, height || 600);
+	this.resize(width || '100%', height || '100%');
 
 	this.progress = 0;
 	this.isPaused = true;
@@ -71,7 +71,7 @@ TTSSEQUENCER.Main.prototype = {
 	resize: function(width, height){
 		this.width = width;
 		this.height = height;
-		this.totalTime = this.beatSize * this.beats.length;
+		
 		this.domElement.width(width).height(height);
 	},
 	/////////////////////////////////////////////

@@ -28,7 +28,7 @@ TTSSEQUENCER.Beat.prototype = {
 		self.domElement = $(document.createElement('div'))
 						.attr("id",this.id)
 						.attr("class","beat");
-		self.domElement.append('<button class="addbtn">Add audio unit</button>');
+		self.domElement.append('<button class="addbtn">+</button>');
 		self.domElement.find('.addbtn').click(function(e){
 			e.preventDefault();
 			self.addButtonClicked.dispatch();

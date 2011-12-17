@@ -16,7 +16,7 @@ $(function(){
 
 function entryPoint(){
   if(domReady && smReady){
-    main = new TTSSEQUENCER.Main(10, 120, 'ttss');
+    main = new TTSSEQUENCER.Main(16, 180, 'ttss', 600, 400);
     
     $('#playbtn').click(function(){main.play()});
     $('#pausebtn').click(function(){main.pause()});
